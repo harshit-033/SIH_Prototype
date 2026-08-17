@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Central Laptop Management</title>
+    <!-- Modern Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Animated background blobs -->
+    <div class="background-effects">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+
+    <main class="dashboard glass-panel">
+        <header class="dashboard-header">
+            <div class="brand">
+                <div class="status-pulse"></div>
+                <h1>Central Laptop Management</h1>
+            </div>
+            
+            <div class="server-stats">
+                <div id="server-status" class="stat-badge offline">
+                    <span class="dot"></span>
+                    <span class="text">Server: OFFLINE</span>
+                </div>
+                <div class="stat-badge neutral">
+                    <span class="text">Clients: <strong id="clients-count">0</strong></span>
+                </div>
+            </div>
+        </header>
+
+        <section class="table-section">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Laptop</th>
+                        <th>Status</th>
+                        <th>CPU</th>
+                        <th>RAM</th>
+                        <th class="hide-mobile">IP Address</th>
+                        <th class="hide-mobile">Last Seen</th>
+                    </tr>
+                </thead>
+                <tbody id="clients-table-body">
+                    <!-- Data will be injected here -->
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            <div class="spinner"></div>
+                            <p>Waiting for data...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
