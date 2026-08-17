@@ -1,9 +1,36 @@
-**prerequisite->  pip install -r requirements.txt in both main and client pc**
+# Setup & Run
 
-**step 1:- open terminal**
-**step 2:- run -> ipconfig**
-**step 3:- copy  and keep your ip address of connected network(ipv4)**
-**step 4:- replace the given server ip in client.py by your ip(192.168.1.10)->(your ipv4 number)**
-**step 5:- in your main pc open terminal in server folder and run command ->  uvicorn server:app --host 0.0.0.0 --port 8000**
-**step 6:- run client.py in another pc **     
-**step 7:- in your main pc open index.html in dashboard folder**
+### Prerequisites
+
+Install dependencies on **both the main PC and client PC**:
+
+```bash
+pip install -r requirements.txt
+```
+
+### Steps
+
+1. On the **main PC**, open Terminal and run:
+
+   ```bash
+   ipconfig
+   ```
+2. Copy the **IPv4 Address** of your connected network.
+3. In `client.py`, replace the server IP:
+
+   ```text
+   192.168.1.10 → YOUR_IPV4_ADDRESS
+   ```
+4. On the **main PC**, open Terminal in the `server` folder and run:
+
+   ```bash
+   uvicorn server:app --host 0.0.0.0 --port 8000
+   ```
+5. On the **client PC**, run:
+
+   ```bash
+   python client.py
+   ```
+6. On the **main PC**, open `dashboard/index.html` in your browser.
+
+> **Note:** Both PCs must be connected to the same network.
