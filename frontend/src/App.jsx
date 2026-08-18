@@ -1,75 +1,32 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import './App.css';
-import Navbar from './components/Navbar';
-import RoleCard from './components/RoleCard';
-import LoginForm from './components/LoginForm';
-import SessionInspector from './components/SessionInspector';
-import ResponseConsole from './components/ResponseConsole';
-import SqlReference from './components/SqlReference';
+import DevConsoleHeader from './components/DevConsoleHeader';
+import AuthStatusCard from './components/AuthStatusCard';
+import JwtInspector from './components/JwtInspector';
+import RoleAuthorizationVisualizer from './components/RoleAuthorizationVisualizer';
+import SecurityFlowDiagram from './components/SecurityFlowDiagram';
+import Phase1AuthConsole from './components/Phase1AuthConsole';
+import Phase2InstitutesConsole from './components/Phase2InstitutesConsole';
+import Phase3AssignmentsConsole from './components/Phase3AssignmentsConsole';
+import RequestHistoryConsole from './components/RequestHistoryConsole';
+import ErrorExplainer from './components/ErrorExplainer';
 import AlertBanner from './components/AlertBanner';
+import SqlReference from './components/SqlReference';
+import { api } from './services/apiClient';
+import { parseJwt } from './utils/jwtUtils';
 
-const API_BASE_URL = 'http://localhost:8080';
-
-const DEMO_ROLES = [
-  {
-    id: 1,
-    title: 'System Administrator',
-    email: 'admin@sih.gov.in',
-    role: 'ADMIN',
-    status: 'ACTIVE',
-    badgeClass: 'badge-admin',
-    isBlocked: false
-  },
-  {
-    id: 2,
-    title: 'Expert Visit Inspector',
-    email: 'inspector@sih.gov.in',
-    role: 'INSPECTOR',
-    status: 'ACTIVE',
-    badgeClass: 'badge-inspector',
-    isBlocked: false
-  },
-  {
-    id: 3,
-    title: 'Institute Representative',
-    email: 'institute@sih.gov.in',
-    role: 'INSTITUTE',
-    status: 'ACTIVE',
-    badgeClass: 'badge-institute',
-    isBlocked: false
-  },
-  {
-    id: 4,
-    title: 'Deactivated Account',
-    email: 'disabled@sih.gov.in',
-    role: 'INSTITUTE',
-    status: 'DISABLED',
-    badgeClass: 'badge-disabled-role',
-    isBlocked: true
-  }
-];
+const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+const FRONTEND_URL = window.location.origin || 'http://localhost:5173';
 
 export default function App() {
   const [serverStatus, setServerStatus] = useState({
     status: 'pinging',
-    message: 'Checking Backend (8080)...'
+    latency: 0
   });
-
-  const [email, setEmail] = useState('inspector@sih.gov.in');
-  const [password, setPassword] = useState('Password@123');
 
   const [activeSession, setActiveSession] = useState(null);
-  const [consoleState, setConsoleState] = useState({
-    status: 0,
-    statusText: 'IDLE',
-    latency: 0,
-    output: '// Awaiting HTTP request... Click any demo card or submit credentials to view response payload.'
-  });
-
   const [alert, setAlert] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSeeding, setIsSeeding] = useState(false);
-  const [isTestingProtected, setIsTestingProtected] = useState(false);
 
   const showAlert = (message, type = 'info') => {
     setAlert({ message, type });
@@ -81,57 +38,35 @@ export default function App() {
   // Check Backend Health
   const checkHealth = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/actuator/health`, { method: 'GET' });
+      const res = await api.checkHealth();
       if (res.ok) {
-        setServerStatus({ status: 'online', message: 'Backend Online (Port 8080)' });
+        setServerStatus({ status: 'online', latency: res.latency });
       } else {
-        setServerStatus({ status: 'pinging', message: `Backend HTTP ${res.status}` });
+        setServerStatus({ status: 'offline', latency: res.latency });
       }
     } catch {
-      setServerStatus({ status: 'offline', message: 'Backend Offline (Start ./mvnw spring-boot:run)' });
+      setServerStatus({ status: 'offline', latency: 0 });
     }
   }, []);
 
-  // Parse JWT token claims
-  const parseJwt = (token) => {
-    try {
-      const parts = token.split('.');
-      if (parts.length === 3) {
-        const payload = JSON.parse(atob(parts[1]));
-        const expDate = payload.exp ? new Date(payload.exp * 1000) : null;
-        const remainingMinutes = expDate ? Math.max(0, Math.round((expDate - new Date()) / 60000)) : 0;
-        return {
-          payload,
-          expiryTimeFormatted: expDate ? expDate.toLocaleTimeString() : null,
-          remainingMinutes
-        };
-      }
-    } catch {
-      return { payload: { error: 'Invalid JWT structure' }, expiryTimeFormatted: null, remainingMinutes: 0 };
-    }
-    return null;
-  };
-
-  // Restore stored session
+  // Restore stored session on mount
   useEffect(() => {
     checkHealth();
-    const interval = setInterval(checkHealth, 10000);
+    const interval = setInterval(checkHealth, 15000);
 
     const savedToken = localStorage.getItem('sih_auth_token');
     if (savedToken) {
       const parsed = parseJwt(savedToken);
-      if (parsed && parsed.payload.exp && parsed.payload.exp * 1000 > Date.now()) {
+      if (parsed && parsed.isValid && !parsed.isExpired) {
         setActiveSession({
           token: savedToken,
           user: {
-            userId: parsed.payload.userId || 1,
+            userId: parsed.payload.userId || null,
             email: parsed.payload.sub || 'user@sih.gov.in',
             role: parsed.payload.role || 'ADMIN',
             status: parsed.payload.status || 'ACTIVE'
           },
-          claims: parsed.payload,
-          expiryTimeFormatted: parsed.expiryTimeFormatted,
-          remainingMinutes: parsed.remainingMinutes
+          parsedJwt: parsed
         });
       } else {
         localStorage.removeItem('sih_auth_token');
@@ -141,144 +76,43 @@ export default function App() {
     return () => clearInterval(interval);
   }, [checkHealth]);
 
-  // Handle Login Request
-  const handleLogin = async (loginEmail, loginPassword) => {
-    setIsSubmitting(true);
-    const startTime = performance.now();
+  // Handle Login Success
+  const handleLoginSuccess = (loginData) => {
+    const parsed = parseJwt(loginData.token);
+    localStorage.setItem('sih_auth_token', loginData.token);
 
-    const requestLog = `>>> POST /api/auth/login\n>>> Payload:\n${JSON.stringify({ email: loginEmail, password: '••••••••' }, null, 2)}`;
+    setActiveSession({
+      token: loginData.token,
+      user: {
+        userId: loginData.userId,
+        email: loginData.email,
+        role: loginData.role,
+        status: loginData.status
+      },
+      parsedJwt: parsed
+    });
+  };
 
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({ email: loginEmail, password: loginPassword })
-      });
-
-      const latency = Math.round(performance.now() - startTime);
-      const data = await res.json();
-
-      setConsoleState({
-        status: res.status,
-        statusText: res.statusText || (res.ok ? 'OK' : 'ERROR'),
-        latency,
-        output: `${requestLog}\n\n<<< HTTP/1.1 ${res.status} ${res.statusText}\n<<< Latency: ${latency} ms\n<<< Body:\n${JSON.stringify(data, null, 2)}`
-      });
-
-      if (res.ok && data.success && data.data?.token) {
-        const loginData = data.data;
-        const parsed = parseJwt(loginData.token);
-        localStorage.setItem('sih_auth_token', loginData.token);
-
-        setActiveSession({
-          token: loginData.token,
-          user: loginData,
-          claims: parsed ? parsed.payload : {},
-          expiryTimeFormatted: parsed ? parsed.expiryTimeFormatted : null,
-          remainingMinutes: parsed ? parsed.remainingMinutes : 0
-        });
-
-        showAlert(`Authentication successful for ${loginData.email}!`, 'success');
-      } else {
-        if (res.status === 403) {
-          showAlert(`Access Rejected: ${data.message || 'Account disabled'}`, 'warning');
-        } else if (res.status === 401) {
-          showAlert(`Authentication Failed: ${data.message || 'Invalid credentials'}`, 'danger');
-        } else if (res.status === 400) {
-          showAlert(`Validation Failed: ${data.errors ? data.errors[0]?.message : data.message}`, 'warning');
-        }
-      }
-    } catch (err) {
-      const latency = Math.round(performance.now() - startTime);
-      setConsoleState({
-        status: 0,
-        statusText: 'CONNECTION REFUSED',
-        latency,
-        output: `${requestLog}\n\n<<< Network Error: Failed to reach backend at ${API_BASE_URL}\n<<< Make sure the Spring Boot backend is running on port 8080.\n<<< Error: ${err.message}`
-      });
-      showAlert('Could not connect to backend. Verify Spring Boot is running on port 8080.', 'danger');
-    } finally {
-      setIsSubmitting(false);
-    }
+  // Handle Logout
+  const handleLogout = () => {
+    localStorage.removeItem('sih_auth_token');
+    setActiveSession(null);
+    showAlert('Logged out and cleared active token from localStorage.', 'info');
   };
 
   // Seed Database
   const handleSeedDatabase = async () => {
     setIsSeeding(true);
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/seed`, {
-        method: 'POST',
-        headers: { 'Accept': 'application/json' }
-      });
-      const data = await res.json();
+    const res = await api.seedUsers();
+    setIsSeeding(false);
 
-      setConsoleState({
-        status: res.status,
-        statusText: res.statusText || 'OK',
-        latency: 0,
-        output: `>>> POST /api/auth/seed\n<<< HTTP/1.1 ${res.status}\n${JSON.stringify(data, null, 2)}`
-      });
-
-      if (res.ok) {
-        showAlert('All 5 demo users seeded into PostgreSQL database!', 'success');
-      } else {
-        showAlert(`Seeding failed: ${data.message}`, 'warning');
-      }
-    } catch {
-      showAlert('Failed to connect to backend for database seeding.', 'danger');
-    } finally {
-      setIsSeeding(false);
+    if (res.ok) {
+      showAlert('All demo accounts seeded into PostgreSQL database!', 'success');
+    } else {
+      showAlert(`Seeding failed: ${res.data?.message || 'Error'}`, 'warning');
     }
   };
 
-  // Test Protected /api/auth/me
-  const handleTestProtected = async (tokenToUse, isTampered = false) => {
-    setIsTestingProtected(true);
-    const startTime = performance.now();
-    const requestLog = `>>> GET /api/auth/me\n>>> Header: Authorization: Bearer ${tokenToUse.substring(0, 15)}...${isTampered ? ' [TAMPERED TOKEN]' : ''}`;
-
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/auth/me`, {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${tokenToUse}`,
-          'Accept': 'application/json'
-        }
-      });
-
-      const latency = Math.round(performance.now() - startTime);
-      const data = await res.json();
-
-      setConsoleState({
-        status: res.status,
-        statusText: res.statusText || (res.ok ? 'OK' : 'UNAUTHORIZED'),
-        latency,
-        output: `${requestLog}\n\n<<< HTTP/1.1 ${res.status} ${res.statusText}\n<<< Latency: ${latency} ms\n<<< Body:\n${JSON.stringify(data, null, 2)}`
-      });
-
-      if (res.ok) {
-        showAlert(`Protected endpoint verified: Authenticated as ${data.data?.email}`, 'success');
-      } else {
-        showAlert(`Protected Endpoint: ${res.status} Unauthorized (${data.message || 'Token Rejected'})`, 'warning');
-      }
-    } catch {
-      showAlert('Error executing protected request to backend.', 'danger');
-    } finally {
-      setIsTestingProtected(false);
-    }
-  };
-
-  // Logout
-  const handleLogout = () => {
-    localStorage.removeItem('sih_auth_token');
-    setActiveSession(null);
-    showAlert('Logged out and cleared active token.', 'info');
-  };
-
-  // Copy helpers
   const handleCopyToken = () => {
     if (activeSession?.token) {
       navigator.clipboard.writeText(activeSession.token);
@@ -288,107 +122,82 @@ export default function App() {
 
   const handleCopySql = (sqlText) => {
     navigator.clipboard.writeText(sqlText);
-    showAlert('All SQL Seed Statements copied to clipboard!', 'success');
-  };
-
-  const handleApplyPreset = (presetEmail, presetPassword, label) => {
-    setEmail(presetEmail);
-    setPassword(presetPassword);
-    showAlert(`Applied preset: ${label}`, 'info');
-    handleLogin(presetEmail, presetPassword);
-  };
-
-  const handleFillForm = (fillEmail, fillPassword) => {
-    setEmail(fillEmail);
-    setPassword(fillPassword);
-    showAlert(`Filled credentials for ${fillEmail}`, 'info');
+    showAlert('SQL reference copied to clipboard!', 'success');
   };
 
   return (
-    <>
-      {/* Background Glow FX */}
+    <div className="app-wrapper">
+      {/* Background Visual Effects */}
       <div className="glow-sphere sphere-1"></div>
       <div className="glow-sphere sphere-2"></div>
 
-      {/* Navbar */}
-      <Navbar
+      {/* Development Console Header */}
+      <DevConsoleHeader
         serverStatus={serverStatus}
+        backendUrl={BACKEND_URL}
+        frontendUrl={FRONTEND_URL}
         onSeedDatabase={handleSeedDatabase}
         isSeeding={isSeeding}
       />
 
-      <main className="container">
+      <main className="main-container">
         {/* Toast Alert */}
         <AlertBanner alert={alert} onClose={() => setAlert(null)} />
 
-        {/* Quick Role Cards */}
-        <section>
-          <div className="section-header">
-            <div>
-              <h2 className="section-title">Pre-Configured Demo Accounts</h2>
-              <p className="section-desc">
-                Click any card to instantly test authentication or fill the login form with realistic roles.
-              </p>
-            </div>
-          </div>
-
-          <div className="role-cards-grid">
-            {DEMO_ROLES.map((roleInfo) => (
-              <RoleCard
-                key={roleInfo.id}
-                roleInfo={roleInfo}
-                onQuickLogin={handleLogin}
-                onFillForm={handleFillForm}
-                isSubmitting={isSubmitting}
-              />
-            ))}
-          </div>
-        </section>
-
-        {/* Form + Session Grid */}
-        <div className="two-col-grid">
-          <LoginForm
-            email={email}
-            setEmail={setEmail}
-            password={password}
-            setPassword={setPassword}
-            onSubmit={handleLogin}
-            isSubmitting={isSubmitting}
-            onApplyPreset={handleApplyPreset}
-          />
-
-          <SessionInspector
-            activeSession={activeSession}
-            onTestProtectedMe={(token) => handleTestProtected(token, false)}
-            onTestTamperedToken={(token) => handleTestProtected(token.slice(0, -5) + 'fakeX', true)}
-            onLogout={handleLogout}
-            onCopyToken={handleCopyToken}
-            isTestingProtected={isTestingProtected}
-          />
-        </div>
-
-        {/* Response Console */}
-        <ResponseConsole
-          consoleState={consoleState}
-          onClearConsole={() =>
-            setConsoleState({
-              status: 0,
-              statusText: 'CLEARED',
-              latency: 0,
-              output: '// Console cleared.'
-            })
-          }
+        {/* 1. Main Authentication & Identity Status */}
+        <AuthStatusCard
+          activeSession={activeSession}
+          onLogout={handleLogout}
+          onCopyToken={handleCopyToken}
         />
 
-        {/* PostgreSQL Command Reference */}
+        {/* 2. Live Request History & Raw Wire Inspector */}
+        <RequestHistoryConsole />
+
+        {/* 3. Phase 1 — Auth & Security Console */}
+        <Phase1AuthConsole
+          activeSession={activeSession}
+          onLoginSuccess={handleLoginSuccess}
+          onShowAlert={showAlert}
+        />
+
+        {/* 4. Phase 2 — Institutes Console */}
+        <Phase2InstitutesConsole
+          activeSession={activeSession}
+          onShowAlert={showAlert}
+        />
+
+        {/* 5. Phase 3 — Assignments Console */}
+        <Phase3AssignmentsConsole
+          activeSession={activeSession}
+          onShowAlert={showAlert}
+        />
+
+        {/* 6. JWT Claims & Storage Inspector */}
+        <JwtInspector
+          activeSession={activeSession}
+          onCopyToken={handleCopyToken}
+          onLogout={handleLogout}
+        />
+
+        {/* 7. RBAC Permission Matrix */}
+        <RoleAuthorizationVisualizer activeRole={activeSession?.user?.role} />
+
+        {/* 8. Security Architecture Flow */}
+        <SecurityFlowDiagram />
+
+        {/* 9. HTTP Response Status Codes Explainer */}
+        <ErrorExplainer />
+
+        {/* 10. PostgreSQL Reference */}
         <SqlReference onCopySql={handleCopySql} />
       </main>
 
-      <footer className="footer">
+      <footer className="dev-footer">
         <p>
-          SIH Institute Inspection & Expert Visit Committee Management System • Spring Boot 4 + React + Spring Security 7 + JWT
+          SIH Institute Inspection System • Development Console (Spring Boot 4 + React 19 + PostgreSQL 18 + Spring Security 7)
         </p>
       </footer>
-    </>
+    </div>
   );
 }

@@ -88,6 +88,26 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Handles business rule validation failures (IllegalArgumentException).
+     */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiError> handleIllegalArgumentException(
+            IllegalArgumentException ex,
+            HttpServletRequest request) {
+
+        log.warn("Invalid argument / business validation error on request [{}]: {}", request.getRequestURI(), ex.getMessage());
+
+        ApiError error = ApiError.of(
+                HttpStatus.BAD_REQUEST.value(),
+                "Bad Request",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.badRequest().body(error);
+    }
+
+    /**
      * Handles invalid credentials and user-not-found authentication failures.
      * Prevents user enumeration by returning an identical 401 response contract.
      */
@@ -175,6 +195,46 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
+    }
+
+    /**
+     * Handles 404 Not Found when a domain resource (e.g. Institute) is not found.
+     */
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ApiError> handleResourceNotFound(
+            ResourceNotFoundException ex,
+            HttpServletRequest request) {
+
+        log.warn("Resource not found on request [{}]: {}", request.getRequestURI(), ex.getMessage());
+
+        ApiError error = ApiError.of(
+                HttpStatus.NOT_FOUND.value(),
+                "Not Found",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
+    /**
+     * Handles 409 Conflict when creating or updating a resource with duplicate unique fields.
+     */
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<ApiError> handleDuplicateResource(
+            DuplicateResourceException ex,
+            HttpServletRequest request) {
+
+        log.warn("Duplicate resource conflict on request [{}]: {}", request.getRequestURI(), ex.getMessage());
+
+        ApiError error = ApiError.of(
+                HttpStatus.CONFLICT.value(),
+                "Conflict",
+                ex.getMessage(),
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(error);
     }
 
     /**

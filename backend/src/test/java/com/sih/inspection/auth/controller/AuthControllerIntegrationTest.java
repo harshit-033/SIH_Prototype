@@ -41,6 +41,9 @@ class AuthControllerIntegrationTest {
     private UserRepository userRepository;
 
     @Autowired
+    private com.sih.inspection.assignment.repository.InspectorInstituteAssignmentRepository assignmentRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -54,6 +57,7 @@ class AuthControllerIntegrationTest {
                 .apply(springSecurity())
                 .build();
 
+        assignmentRepository.deleteAll();
         userRepository.deleteAll();
 
         // 1. Seed Active Admin
