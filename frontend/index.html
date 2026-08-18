@@ -1,16 +1,912 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>SIH Inspection Platform — Auth & Verification Hub (React)</title>
-    <meta name="description" content="Production-grade React verification console for SIH Inspection Platform JWT Authentication." />
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin & College Management Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 font-sans min-h-screen flex flex-col">
+
+  <!-- Header & Role Switcher -->
+  <header class="bg-indigo-700 text-white shadow-md p-4 flex justify-between items-center">
+    <div class="flex items-center space-x-3">
+      <i class="fa-solid fa-graduation-cap text-2xl"></i>
+      <h1 class="text-xl font-bold tracking-wide">College Portal</h1>
+    </div>
+    
+    <div class="flex items-center space-x-2 bg-indigo-800 p-1 rounded-lg">
+      <button id="role-admin-btn" onclick="switchRole('admin')" class="px-4 py-1.5 rounded-md text-sm font-semibold bg-white text-indigo-800 shadow transition">
+        Admin
+      </button>
+      <button id="role-college-btn" onclick="switchRole('college')" class="px-4 py-1.5 rounded-md text-sm font-semibold text-indigo-200 hover:text-white transition">
+        College
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="flex-1 p-6 max-w-7xl w-full mx-auto">
+    
+    <!-- ADMIN ROLE VIEW -->
+    <div id="admin-view" class="space-y-6">
+      <div class="flex border-b border-gray-300 space-x-4">
+        <button id="tab-lab-btn" onclick="switchAdminTab('lab')" class="pb-3 px-2 border-b-2 border-indigo-600 text-indigo-600 font-semibold flex items-center space-x-2">
+          <i class="fa-solid fa-desktop"></i>
+          <span>Lab Status</span>
+        </button>
+        <button id="tab-doc-btn" onclick="switchAdminTab('doc')" class="pb-3 px-2 border-b-2 border-transparent text-gray-500 hover:text-indigo-600 font-semibold flex items-center space-x-2">
+          <i class="fa-solid fa-file-invoice"></i>
+          <span>Document Verification</span>
+        </button>
+        <button id="tab-live-btn" onclick="switchAdminTab('live')" class="pb-3 px-2 border-b-2 border-transparent text-gray-500 hover:text-indigo-600 font-semibold flex items-center space-x-2">
+          <i class="fa-solid fa-chart-line"></i>
+          <span>Live PC Dashboard</span>
+        </button>
+      </div>
+
+      <!-- SECTION 1: LAB STATUS -->
+      <div id="section-lab-status" class="space-y-6">
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h2 class="text-lg font-bold text-gray-800">College Labs & System Info</h2>
+            <p class="text-sm text-gray-500">Select a college and then choose a specific lab to view system details.</p>
+          </div>
+          
+          <div class="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+            <div class="w-full sm:w-48">
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Select College</label>
+              <select id="lab-college-select" onchange="onCollegeChange()" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+                <option value="IIT Bombay">IIT Bombay</option>
+                <option value="IIT Delhi">IIT Delhi</option>
+                <option value="NIT Trichy">NIT Trichy</option>
+              </select>
+            </div>
+            <div class="w-full sm:w-56">
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Select Lab</label>
+              <select id="lab-select" onchange="renderLabStatus()" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none"></select>
+            </div>
+          </div>
+        </div>
+        <div id="lab-list-container" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+      </div>
+
+      <!-- SECTION 2: DOCUMENT VERIFICATION -->
+      <div id="section-doc-verification" class="hidden space-y-6">
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h2 class="text-lg font-bold text-gray-800">Faculty Document Verification</h2>
+            <p class="text-sm text-gray-500">Select college to view faculty details and document status.</p>
+          </div>
+          <div class="w-full md:w-64">
+            <label class="block text-xs font-semibold text-gray-600 mb-1">Select College</label>
+            <select id="doc-college-select" onchange="renderDocVerification()" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+              <option value="IIT Bombay">IIT Bombay</option>
+              <option value="IIT Delhi">IIT Delhi</option>
+              <option value="NIT Trichy">NIT Trichy</option>
+            </select>
+          </div>
+        </div>
+        <div id="faculty-list-container" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto"></div>
+      </div>
+
+      <!-- SECTION 3: LIVE PC DASHBOARD -->
+      <div id="section-live-dashboard" class="hidden space-y-6">
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+          <div>
+            <h2 class="text-lg font-bold text-gray-800">Live PC Dashboard</h2>
+            <p class="text-sm text-gray-500">Real-time client inventory, health metrics, and full system information from connected PCs.</p>
+          </div>
+          <div class="flex flex-wrap gap-2 text-xs font-semibold">
+            <span id="live-server-badge" class="px-3 py-1.5 rounded-full bg-red-50 text-red-700 border border-red-100">
+              <i class="fa-solid fa-circle text-[8px] mr-1"></i> Server Offline
+            </span>
+            <span class="px-3 py-1.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
+              Online: <strong id="live-online-count">0</strong>
+            </span>
+            <span class="px-3 py-1.5 rounded-full bg-slate-50 text-slate-700 border border-slate-200">
+              Inventory: <strong id="live-inventory-count">0</strong>
+            </span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+            <p class="text-xs font-bold text-gray-400 uppercase">CPU Average</p>
+            <p id="metric-cpu-avg" class="text-2xl font-bold text-indigo-700 mt-1">--</p>
+          </div>
+          <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+            <p class="text-xs font-bold text-gray-400 uppercase">RAM Average</p>
+            <p id="metric-ram-avg" class="text-2xl font-bold text-indigo-700 mt-1">--</p>
+          </div>
+          <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+            <p class="text-xs font-bold text-gray-400 uppercase">Online PCs</p>
+            <p id="metric-online" class="text-2xl font-bold text-emerald-700 mt-1">0</p>
+          </div>
+          <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+            <p class="text-xs font-bold text-gray-400 uppercase">Offline PCs</p>
+            <p id="metric-offline" class="text-2xl font-bold text-amber-700 mt-1">0</p>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto">
+          <table class="w-full text-left border-collapse text-sm min-w-[900px]">
+            <thead>
+              <tr class="bg-gray-50 border-b border-gray-200 text-gray-600 uppercase text-xs">
+                <th class="p-4">PC</th>
+                <th class="p-4">Status</th>
+                <th class="p-4">CPU</th>
+                <th class="p-4">RAM</th>
+                <th class="p-4">Network I/O</th>
+                <th class="p-4">Disk I/O</th>
+                <th class="p-4">Last Seen</th>
+                <th class="p-4 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody id="live-pc-table" class="divide-y divide-gray-100">
+              <tr>
+                <td colspan="8" class="p-5 text-center text-gray-500">Waiting for live PC data...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div>
+          <h3 class="text-md font-bold text-gray-800 mb-3">PC Inventory Details</h3>
+          <div id="live-inventory-grid" class="grid grid-cols-1 lg:grid-cols-2 gap-4"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COLLEGE ROLE VIEW -->
+    <div id="college-view" class="hidden space-y-6">
+      
+      <!-- College Sub-tabs -->
+      <div class="flex border-b border-gray-300 space-x-4">
+        <button id="tab-college-fac-btn" onclick="switchCollegeTab('faculty')" class="pb-3 px-2 border-b-2 border-indigo-600 text-indigo-600 font-semibold flex items-center space-x-2">
+          <i class="fa-solid fa-user-graduate"></i>
+          <span>Faculty Management</span>
+        </button>
+        <button id="tab-college-lab-btn" onclick="switchCollegeTab('lab')" class="pb-3 px-2 border-b-2 border-transparent text-gray-500 hover:text-indigo-600 font-semibold flex items-center space-x-2">
+          <i class="fa-solid fa-laptop-code"></i>
+          <span>Lab Management</span>
+        </button>
+      </div>
+
+      <!-- COLLEGE FACULTY SECTION -->
+      <div id="college-faculty-section" class="space-y-6">
+        <!-- Add / Update Faculty Form -->
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 space-y-4">
+          <h3 id="fac-form-title" class="text-md font-bold text-gray-800 border-b pb-2">Register New Faculty</h3>
+          <form id="faculty-form" onsubmit="handleFacultySubmit(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input type="hidden" id="fac-edit-index" value="-1">
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Faculty ID</label>
+              <input type="text" id="fac-id" required placeholder="e.g. F103" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Full Name</label>
+              <input type="text" id="fac-name" required placeholder="e.g. Dr. Anil Kumar" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Department</label>
+              <input type="text" id="fac-dept" required placeholder="e.g. Information Technology" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Document Details</label>
+              <input type="text" id="fac-doc" required placeholder="e.g. Ph.D Certificate & ID" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            </div>
+            <div class="md:col-span-2 flex justify-end gap-2">
+              <button type="button" onclick="resetFacultyForm()" class="px-4 py-2 border border-gray-300 text-gray-600 rounded-lg text-xs font-semibold hover:bg-gray-50">Cancel / Reset</button>
+              <button type="submit" id="fac-submit-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-700">Save Faculty</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Faculty Details Table -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-x-auto p-4 space-y-3">
+          <h3 class="text-md font-bold text-gray-800">Faculty Details List</h3>
+          <div id="college-faculty-list"></div>
+        </div>
+      </div>
+
+      <!-- COLLEGE LAB SECTION -->
+      <div id="college-lab-section" class="hidden space-y-6">
+        <!-- Add / Update Lab Form -->
+        <div class="bg-white p-5 rounded-xl shadow-sm border border-gray-200 space-y-4">
+          <h3 id="lab-form-title" class="text-md font-bold text-gray-800 border-b pb-2">Register New Lab & Systems</h3>
+          <form id="lab-form" onsubmit="handleLabSubmit(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <input type="hidden" id="lab-edit-index" value="-1">
+            <div class="md:col-span-1">
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Lab Name</label>
+              <input type="text" id="c-lab-name" required placeholder="e.g. AI & Robotics Lab" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            </div>
+            <div class="md:col-span-1">
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Total Computers Count</label>
+              <input type="number" id="c-lab-count" required placeholder="e.g. 30" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            </div>
+            <div class="md:col-span-1">
+              <label class="block text-xs font-semibold text-gray-600 mb-1">OS Version / Build</label>
+              <input type="text" id="c-lab-version" required placeholder="e.g. Windows 11 Pro / Ubuntu 22.04" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            </div>
+            <div class="md:col-span-3">
+              <label class="block text-xs font-semibold text-gray-600 mb-1">Hardware Specification Details</label>
+              <input type="text" id="c-lab-spec" required placeholder="e.g. Intel i7 13th Gen, 32GB RAM, RTX 3060, 1TB SSD" class="w-full border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:outline-none">
+            </div>
+            <div class="md:col-span-3 flex justify-end gap-2">
+              <button type="button" onclick="resetLabForm()" class="px-4 py-2 border border-gray-300 text-gray-600 rounded-lg text-xs font-semibold hover:bg-gray-50">Cancel / Reset</button>
+              <button type="submit" id="lab-submit-btn" class="px-4 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-700">Save Lab Details</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Registered Labs Details List -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 space-y-3">
+          <h3 class="text-md font-bold text-gray-800">Labs & Hardware Specifications</h3>
+          <div id="college-lab-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <div id="pc-details-modal" class="hidden fixed inset-0 bg-slate-900/60 z-50 p-4 overflow-y-auto">
+    <div class="bg-white max-w-5xl mx-auto rounded-xl shadow-xl border border-gray-200 overflow-hidden">
+      <div class="p-5 border-b border-gray-200 flex justify-between items-start gap-4">
+        <div>
+          <h2 id="pc-modal-title" class="text-lg font-bold text-gray-800">System Details</h2>
+          <p id="pc-modal-subtitle" class="text-sm text-gray-500"></p>
+        </div>
+        <button onclick="closePcDetails()" class="w-9 h-9 rounded-lg border border-gray-300 text-gray-500 hover:bg-gray-50">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div id="pc-modal-body" class="p-5 space-y-5"></div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000";
+    let liveClients = [];
+    let liveInventory = [];
+
+    // Data Store (IIT Bombay active by default for College role)
+    const activeCollege = "IIT Bombay";
+    const collegeData = {
+      "IIT Bombay": {
+        labs: [
+          {
+            name: "AI & ML Supercomputing Lab",
+            totalPCs: 40,
+            version: "Ubuntu 22.04 LTS / CUDA 12",
+            spec: "NVIDIA RTX 4090, 64GB RAM, Intel i9 13th Gen",
+            systems: [
+              { id: "SYS-101", spec: "NVIDIA RTX 4090, 64GB RAM, Intel i9 13th Gen", status: "Active" },
+              { id: "SYS-102", spec: "NVIDIA RTX 4090, 64GB RAM, Intel i9 13th Gen", status: "Maintenance" }
+            ]
+          },
+          {
+            name: "Advanced Computer Networks Lab",
+            totalPCs: 30,
+            version: "Windows 11 Enterprise",
+            spec: "32GB RAM, Intel i7 12th Gen, 1Gbps NIC",
+            systems: [
+              { id: "NET-201", spec: "32GB RAM, Intel i7 12th Gen, 1Gbps NIC", status: "Active" }
+            ]
+          }
+        ],
+        faculties: [
+          { id: "F101", name: "Dr. Rajesh Sharma", dept: "Computer Science", doc: "Ph.D. Certificate & ID Proof", status: "Verified" },
+          { id: "F102", name: "Prof. Sunita Rao", dept: "Data Science", doc: "Appointment Letter & Qualification", status: "Pending" }
+        ]
+      },
+      "IIT Delhi": {
+        labs: [
+          {
+            name: "Cyber Security Lab",
+            totalPCs: 25,
+            version: "Kali Linux / Win 11",
+            spec: "16GB RAM, Intel i7, Dual NIC",
+            systems: [{ id: "SEC-301", spec: "16GB RAM, Intel i7, Dual NIC", status: "Active" }]
+          }
+        ],
+        faculties: [
+          { id: "F201", name: "Dr. Amit Verma", dept: "Cyber Security", doc: "Experience Certificate", status: "Verified" }
+        ]
+      },
+      "NIT Trichy": {
+        labs: [
+          {
+            name: "Software Engineering Lab",
+            totalPCs: 50,
+            version: "Windows 10 Pro",
+            spec: "16GB RAM, Intel i5, 512GB SSD",
+            systems: [{ id: "SE-01", spec: "16GB RAM, Intel i5, 512GB SSD", status: "Active" }]
+          }
+        ],
+        faculties: [
+          { id: "F301", name: "Dr. P. Subramanian", dept: "Information Technology", doc: "Publication Verification", status: "Pending" }
+        ]
+      }
+    };
+
+    // Global Navigation Switchers
+    function switchRole(role) {
+      const adminView = document.getElementById('admin-view');
+      const collegeView = document.getElementById('college-view');
+      const adminBtn = document.getElementById('role-admin-btn');
+      const collegeBtn = document.getElementById('role-college-btn');
+
+      if (role === 'admin') {
+        adminView.classList.remove('hidden');
+        collegeView.classList.add('hidden');
+        adminBtn.className = "px-4 py-1.5 rounded-md text-sm font-semibold bg-white text-indigo-800 shadow transition";
+        collegeBtn.className = "px-4 py-1.5 rounded-md text-sm font-semibold text-indigo-200 hover:text-white transition";
+      } else {
+        adminView.classList.add('hidden');
+        collegeView.classList.remove('hidden');
+        collegeBtn.className = "px-4 py-1.5 rounded-md text-sm font-semibold bg-white text-indigo-800 shadow transition";
+        adminBtn.className = "px-4 py-1.5 rounded-md text-sm font-semibold text-indigo-200 hover:text-white transition";
+        renderCollegeFaculty();
+        renderCollegeLabs();
+      }
+    }
+
+    function switchAdminTab(tab) {
+      const labSec = document.getElementById('section-lab-status');
+      const docSec = document.getElementById('section-doc-verification');
+      const liveSec = document.getElementById('section-live-dashboard');
+      const labBtn = document.getElementById('tab-lab-btn');
+      const docBtn = document.getElementById('tab-doc-btn');
+      const liveBtn = document.getElementById('tab-live-btn');
+
+      const activeClass = "pb-3 px-2 border-b-2 border-indigo-600 text-indigo-600 font-semibold flex items-center space-x-2";
+      const idleClass = "pb-3 px-2 border-b-2 border-transparent text-gray-500 hover:text-indigo-600 font-semibold flex items-center space-x-2";
+
+      if (tab === 'lab') {
+        labSec.classList.remove('hidden');
+        docSec.classList.add('hidden');
+        liveSec.classList.add('hidden');
+        labBtn.className = activeClass;
+        docBtn.className = idleClass;
+        liveBtn.className = idleClass;
+        renderLabStatus();
+      } else if (tab === 'doc') {
+        labSec.classList.add('hidden');
+        docSec.classList.remove('hidden');
+        liveSec.classList.add('hidden');
+        docBtn.className = activeClass;
+        labBtn.className = idleClass;
+        liveBtn.className = idleClass;
+        renderDocVerification();
+      } else {
+        labSec.classList.add('hidden');
+        docSec.classList.add('hidden');
+        liveSec.classList.remove('hidden');
+        liveBtn.className = activeClass;
+        labBtn.className = idleClass;
+        docBtn.className = idleClass;
+        updateLiveDashboard();
+      }
+    }
+
+    function switchCollegeTab(tab) {
+      const facSec = document.getElementById('college-faculty-section');
+      const labSec = document.getElementById('college-lab-section');
+      const facBtn = document.getElementById('tab-college-fac-btn');
+      const labBtn = document.getElementById('tab-college-lab-btn');
+
+      if (tab === 'faculty') {
+        facSec.classList.remove('hidden');
+        labSec.classList.add('hidden');
+        facBtn.className = "pb-3 px-2 border-b-2 border-indigo-600 text-indigo-600 font-semibold flex items-center space-x-2";
+        labBtn.className = "pb-3 px-2 border-b-2 border-transparent text-gray-500 hover:text-indigo-600 font-semibold flex items-center space-x-2";
+      } else {
+        facSec.classList.add('hidden');
+        labSec.classList.remove('hidden');
+        labBtn.className = "pb-3 px-2 border-b-2 border-indigo-600 text-indigo-600 font-semibold flex items-center space-x-2";
+        facBtn.className = "pb-3 px-2 border-b-2 border-transparent text-gray-500 hover:text-indigo-600 font-semibold flex items-center space-x-2";
+      }
+    }
+
+    // --- ADMIN RENDERING FUNCTIONS ---
+    function updateLabDropdown() {
+      const college = document.getElementById('lab-college-select').value;
+      const labSelect = document.getElementById('lab-select');
+      const labs = collegeData[college]?.labs || [];
+
+      labSelect.innerHTML = '<option value="ALL">All Labs</option>';
+      labs.forEach(lab => {
+        const option = document.createElement('option');
+        option.value = lab.name;
+        option.textContent = lab.name;
+        labSelect.appendChild(option);
+      });
+    }
+
+    function onCollegeChange() {
+      updateLabDropdown();
+      renderLabStatus();
+    }
+
+    function renderLabStatus() {
+      const college = document.getElementById('lab-college-select').value;
+      const selectedLab = document.getElementById('lab-select').value;
+      const container = document.getElementById('lab-list-container');
+      let labs = collegeData[college]?.labs || [];
+
+      if (selectedLab && selectedLab !== 'ALL') {
+        labs = labs.filter(lab => lab.name === selectedLab);
+      }
+
+      if (labs.length === 0) {
+        container.innerHTML = `<p class="text-gray-500 col-span-2">No labs available for this selection.</p>`;
+        return;
+      }
+
+      container.innerHTML = labs.map(lab => `
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-4">
+          <div class="flex items-center space-x-3 border-b pb-3 border-gray-100">
+            <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center font-bold">
+              <i class="fa-solid fa-flask"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-gray-800 text-base">${lab.name}</h3>
+              <p class="text-xs text-gray-500">PCs: ${lab.totalPCs || 'N/A'} | OS: ${lab.version || 'Standard'}</p>
+            </div>
+          </div>
+          <div class="space-y-3">
+            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">System Specifications</span>
+            ${lab.systems.map(sys => `
+              <div class="bg-gray-50 p-3 rounded-lg border border-gray-200 flex justify-between items-center text-sm">
+                <div>
+                  <p class="font-semibold text-gray-800">${sys.id}</p>
+                  <p class="text-xs text-gray-500">${sys.spec}</p>
+                </div>
+                <span class="px-2.5 py-1 text-xs font-medium rounded-full ${sys.status === 'Active' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${sys.status}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderDocVerification() {
+      const college = document.getElementById('doc-college-select').value;
+      const container = document.getElementById('faculty-list-container');
+      const data = collegeData[college]?.faculties || [];
+
+      if (data.length === 0) {
+        container.innerHTML = `<p class="p-5 text-gray-500">No faculty records found.</p>`;
+        return;
+      }
+
+      container.innerHTML = `
+        <table class="w-full text-left border-collapse text-sm min-w-[600px]">
+          <thead>
+            <tr class="bg-gray-50 border-b border-gray-200 text-gray-600 uppercase text-xs">
+              <th class="p-4">Faculty Name & ID</th>
+              <th class="p-4">Department</th>
+              <th class="p-4">Document Details</th>
+              <th class="p-4">Status</th>
+              <th class="p-4 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            ${data.map(fac => `
+              <tr class="hover:bg-gray-50">
+                <td class="p-4"><p class="font-bold text-gray-800">${fac.name}</p><p class="text-xs text-gray-400">${fac.id}</p></td>
+                <td class="p-4 text-gray-600">${fac.dept}</td>
+                <td class="p-4 text-gray-600">${fac.doc}</td>
+                <td class="p-4"><span class="px-2.5 py-1 text-xs font-medium rounded-full ${fac.status === 'Verified' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${fac.status}</span></td>
+                <td class="p-4 text-right"><button class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition">View Documents</button></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    // --- LIVE PC DASHBOARD FUNCTIONS ---
+    function valueOrDash(value, suffix = '') {
+      if (value === undefined || value === null || value === '' || value === '--') return '--';
+      return `${value}${suffix}`;
+    }
+
+    function formatDateTime(value) {
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return '--';
+      return date.toLocaleString([], {
+        month: 'short',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
+      });
+    }
+
+    function mergeLiveInventory(clients, inventory) {
+      const byIp = new Map();
+      inventory.forEach(item => byIp.set(item.ip, { ...item }));
+      clients.forEach(client => {
+        const existing = byIp.get(client.ip) || {};
+        byIp.set(client.ip, {
+          ...existing,
+          ...client,
+          first_seen: existing.first_seen || client.first_seen || client.last_seen,
+          last_seen: client.last_seen || existing.last_seen,
+          is_online: true,
+          system_info: client.system_info || existing.system_info || {}
+        });
+      });
+      return Array.from(byIp.values()).sort((a, b) => {
+        if (a.is_online !== b.is_online) return a.is_online ? -1 : 1;
+        return (a.hostname || '').localeCompare(b.hostname || '');
+      });
+    }
+
+    async function updateLiveDashboard() {
+      const serverBadge = document.getElementById('live-server-badge');
+      try {
+        const [rootRes, clientsRes, inventoryRes] = await Promise.all([
+          fetch(`${API_BASE}/`),
+          fetch(`${API_BASE}/clients`),
+          fetch(`${API_BASE}/inventory`)
+        ]);
+
+        const root = await rootRes.json();
+        liveClients = await clientsRes.json();
+        const inventory = await inventoryRes.json();
+        liveInventory = mergeLiveInventory(liveClients, inventory);
+
+        serverBadge.className = "px-3 py-1.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100";
+        serverBadge.innerHTML = '<i class="fa-solid fa-circle text-[8px] mr-1"></i> Server Online';
+
+        document.getElementById('live-online-count').textContent = liveClients.length;
+        document.getElementById('live-inventory-count').textContent = root.inventory_count ?? liveInventory.length;
+
+        renderLiveMetrics();
+        renderLivePcTable();
+        renderLiveInventoryCards();
+      } catch (error) {
+        serverBadge.className = "px-3 py-1.5 rounded-full bg-red-50 text-red-700 border border-red-100";
+        serverBadge.innerHTML = '<i class="fa-solid fa-circle text-[8px] mr-1"></i> Server Offline';
+        document.getElementById('live-pc-table').innerHTML = `
+          <tr><td colspan="8" class="p-5 text-center text-red-600">Unable to reach scanner service on ${API_BASE}</td></tr>
+        `;
+      }
+    }
+
+    function renderLiveMetrics() {
+      const online = liveInventory.filter(pc => pc.is_online).length;
+      const offline = Math.max(liveInventory.length - online, 0);
+      const cpuValues = liveClients.map(pc => Number(pc.cpu)).filter(n => !Number.isNaN(n));
+      const ramValues = liveClients.map(pc => Number(pc.ram)).filter(n => !Number.isNaN(n));
+      const average = values => values.length ? `${(values.reduce((a, b) => a + b, 0) / values.length).toFixed(1)}%` : '--';
+
+      document.getElementById('metric-cpu-avg').textContent = average(cpuValues);
+      document.getElementById('metric-ram-avg').textContent = average(ramValues);
+      document.getElementById('metric-online').textContent = online;
+      document.getElementById('metric-offline').textContent = offline;
+    }
+
+    function renderLivePcTable() {
+      const table = document.getElementById('live-pc-table');
+      if (liveInventory.length === 0) {
+        table.innerHTML = '<tr><td colspan="8" class="p-5 text-center text-gray-500">No PCs have connected yet.</td></tr>';
+        return;
+      }
+
+      table.innerHTML = liveInventory.map(pc => {
+        const isOnline = pc.is_online;
+        const statusClass = isOnline ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700';
+        return `
+          <tr class="hover:bg-gray-50">
+            <td class="p-4">
+              <p class="font-bold text-gray-800">${valueOrDash(pc.hostname)}</p>
+              <p class="text-xs text-gray-400">${valueOrDash(pc.ip)}</p>
+            </td>
+            <td class="p-4"><span class="px-2.5 py-1 text-xs font-medium rounded-full ${statusClass}">${isOnline ? 'Online' : 'Offline'}</span></td>
+            <td class="p-4 font-mono text-indigo-700">${isOnline ? valueOrDash(pc.cpu, '%') : '--'}</td>
+            <td class="p-4 font-mono text-indigo-700">${isOnline ? valueOrDash(pc.ram, '%') : '--'}</td>
+            <td class="p-4 text-xs text-gray-600">
+              <p>Sent: <span class="font-semibold">${isOnline ? valueOrDash(pc.net_sent) : '--'}</span></p>
+              <p>Recv: <span class="font-semibold">${isOnline ? valueOrDash(pc.net_recv) : '--'}</span></p>
+            </td>
+            <td class="p-4 text-xs text-gray-600">
+              <p>Read: <span class="font-semibold">${isOnline ? valueOrDash(pc.disk_read) : '--'}</span></p>
+              <p>Write: <span class="font-semibold">${isOnline ? valueOrDash(pc.disk_write) : '--'}</span></p>
+            </td>
+            <td class="p-4 text-xs text-gray-500">${formatDateTime(pc.last_seen)}</td>
+            <td class="p-4 text-right">
+              <button onclick="openPcDetails('${pc.ip}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition">
+                Full Details
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderLiveInventoryCards() {
+      const grid = document.getElementById('live-inventory-grid');
+      if (liveInventory.length === 0) {
+        grid.innerHTML = '<p class="text-gray-500 text-sm col-span-2">No inventory records available.</p>';
+        return;
+      }
+
+      grid.innerHTML = liveInventory.map(pc => {
+        const si = pc.system_info || {};
+        const mainDisk = si.disks && si.disks.length ? si.disks[0] : null;
+        const statusClass = pc.is_online ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700';
+        return `
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 space-y-4">
+            <div class="flex justify-between items-start border-b pb-3 border-gray-100 gap-4">
+              <div>
+                <h4 class="font-bold text-gray-800 text-base">${valueOrDash(pc.hostname)}</h4>
+                <p class="text-xs text-gray-500">${valueOrDash(pc.ip)}</p>
+              </div>
+              <span class="px-2.5 py-1 text-xs font-medium rounded-full ${statusClass}">${pc.is_online ? 'Online' : 'Offline'}</span>
+            </div>
+            <div class="grid grid-cols-2 gap-3 text-xs">
+              <div><p class="font-bold text-gray-400 uppercase">OS</p><p class="text-gray-700">${valueOrDash(si.os)}</p></div>
+              <div><p class="font-bold text-gray-400 uppercase">Architecture</p><p class="text-gray-700">${valueOrDash(si.machine)}</p></div>
+              <div><p class="font-bold text-gray-400 uppercase">CPU Cores</p><p class="text-gray-700">${valueOrDash(si.cpu_cores_total)} logical / ${valueOrDash(si.cpu_cores_physical)} physical</p></div>
+              <div><p class="font-bold text-gray-400 uppercase">RAM</p><p class="text-gray-700">${valueOrDash(si.total_ram)}</p></div>
+              <div><p class="font-bold text-gray-400 uppercase">Main Disk</p><p class="text-gray-700">${mainDisk ? `${mainDisk.used} / ${mainDisk.total}` : '--'}</p></div>
+              <div><p class="font-bold text-gray-400 uppercase">Last Seen</p><p class="text-gray-700">${formatDateTime(pc.last_seen)}</p></div>
+            </div>
+            <button onclick="openPcDetails('${pc.ip}')" class="w-full border border-indigo-200 text-indigo-700 hover:bg-indigo-50 px-3 py-2 rounded-lg text-xs font-semibold transition">
+              View Complete System Information
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openPcDetails(ip) {
+      const pc = liveInventory.find(item => item.ip === ip) || liveClients.find(item => item.ip === ip);
+      if (!pc) return;
+      const si = pc.system_info || {};
+
+      document.getElementById('pc-modal-title').textContent = `${valueOrDash(pc.hostname)} System Details`;
+      document.getElementById('pc-modal-subtitle').textContent = `${valueOrDash(pc.ip)} | First seen: ${formatDateTime(pc.first_seen)} | Last seen: ${formatDateTime(pc.last_seen)}`;
+
+      const disks = si.disks && si.disks.length ? si.disks.map(disk => `
+        <div class="bg-gray-50 border border-gray-200 rounded-lg p-3">
+          <div class="flex justify-between text-xs mb-2 gap-3">
+            <span class="font-bold text-gray-800">${valueOrDash(disk.mountpoint)} (${valueOrDash(disk.device)})</span>
+            <span class="text-gray-500">${valueOrDash(disk.percent)} used | ${valueOrDash(disk.fstype)}</span>
+          </div>
+          <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div class="h-full bg-indigo-600" style="width:${parseFloat(disk.percent) || 0}%"></div>
+          </div>
+          <div class="grid grid-cols-3 gap-2 mt-2 text-xs text-gray-600">
+            <span>Total: <strong>${valueOrDash(disk.total)}</strong></span>
+            <span>Used: <strong>${valueOrDash(disk.used)}</strong></span>
+            <span>Free: <strong>${valueOrDash(disk.free)}</strong></span>
+          </div>
+        </div>
+      `).join('') : '<p class="text-sm text-gray-500">No disk data available.</p>';
+
+      const networks = si.networks && Object.keys(si.networks).length ? Object.entries(si.networks).map(([name, addrs]) => {
+        const ipAddr = addrs.find(addr => addr.IP)?.IP || '--';
+        const mac = addrs.find(addr => addr.MAC)?.MAC || '--';
+        return `
+          <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 text-xs">
+            <p class="font-bold text-gray-800">${name}</p>
+            <p class="text-gray-600">IP: <strong>${ipAddr}</strong></p>
+            <p class="text-gray-600">MAC: <strong>${mac}</strong></p>
+          </div>
+        `;
+      }).join('') : '<p class="text-sm text-gray-500">No network interface data available.</p>';
+
+      document.getElementById('pc-modal-body').innerHTML = `
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-4"><p class="text-xs font-bold text-indigo-400 uppercase">CPU Usage</p><p class="text-2xl font-bold text-indigo-700">${pc.is_online ? valueOrDash(pc.cpu, '%') : '--'}</p></div>
+          <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-4"><p class="text-xs font-bold text-indigo-400 uppercase">RAM Usage</p><p class="text-2xl font-bold text-indigo-700">${pc.is_online ? valueOrDash(pc.ram, '%') : '--'}</p></div>
+          <div class="bg-indigo-50 border border-indigo-100 rounded-xl p-4"><p class="text-xs font-bold text-indigo-400 uppercase">Status</p><p class="text-2xl font-bold ${pc.is_online ? 'text-emerald-700' : 'text-red-700'}">${pc.is_online ? 'Online' : 'Offline'}</p></div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="bg-white border border-gray-200 rounded-xl p-4 space-y-2">
+            <h3 class="font-bold text-gray-800 border-b pb-2">System Information</h3>
+            <p class="text-sm text-gray-600"><strong>OS:</strong> ${valueOrDash(si.os)}</p>
+            <p class="text-sm text-gray-600"><strong>OS Version:</strong> ${valueOrDash(si.version)}</p>
+            <p class="text-sm text-gray-600"><strong>Machine:</strong> ${valueOrDash(si.machine)}</p>
+            <p class="text-sm text-gray-600"><strong>Processor:</strong> ${valueOrDash(si.processor)}</p>
+            <p class="text-sm text-gray-600"><strong>Boot Time:</strong> ${valueOrDash(si.boot_time)}</p>
+          </div>
+          <div class="bg-white border border-gray-200 rounded-xl p-4 space-y-2">
+            <h3 class="font-bold text-gray-800 border-b pb-2">CPU, Memory, and I/O</h3>
+            <p class="text-sm text-gray-600"><strong>Physical Cores:</strong> ${valueOrDash(si.cpu_cores_physical)}</p>
+            <p class="text-sm text-gray-600"><strong>Logical Cores:</strong> ${valueOrDash(si.cpu_cores_total)}</p>
+            <p class="text-sm text-gray-600"><strong>Max Frequency:</strong> ${valueOrDash(si.cpu_max_freq)}</p>
+            <p class="text-sm text-gray-600"><strong>Total RAM:</strong> ${valueOrDash(si.total_ram)}</p>
+            <p class="text-sm text-gray-600"><strong>Network:</strong> Sent ${valueOrDash(pc.net_sent)}, Recv ${valueOrDash(pc.net_recv)}</p>
+            <p class="text-sm text-gray-600"><strong>Disk I/O:</strong> Read ${valueOrDash(pc.disk_read)}, Write ${valueOrDash(pc.disk_write)}</p>
+          </div>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
+          <h3 class="font-bold text-gray-800 border-b pb-2">Storage Partitions</h3>
+          ${disks}
+        </div>
+        <div class="bg-white border border-gray-200 rounded-xl p-4 space-y-3">
+          <h3 class="font-bold text-gray-800 border-b pb-2">Network Interfaces</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">${networks}</div>
+        </div>
+      `;
+
+      document.getElementById('pc-details-modal').classList.remove('hidden');
+    }
+
+    function closePcDetails() {
+      document.getElementById('pc-details-modal').classList.add('hidden');
+    }
+
+    // --- COLLEGE ROLE FUNCTIONS ---
+
+    // 1. Faculty Operations
+    function renderCollegeFaculty() {
+      const container = document.getElementById('college-faculty-list');
+      const faculties = collegeData[activeCollege].faculties;
+
+      if (faculties.length === 0) {
+        container.innerHTML = `<p class="text-gray-500 text-sm">No registered faculty members.</p>`;
+        return;
+      }
+
+      container.innerHTML = `
+        <table class="w-full text-left border-collapse text-sm">
+          <thead>
+            <tr class="bg-gray-50 border-b border-gray-200 text-gray-600 uppercase text-xs">
+              <th class="p-3">ID</th>
+              <th class="p-3">Name</th>
+              <th class="p-3">Department</th>
+              <th class="p-3">Document</th>
+              <th class="p-3">Status</th>
+              <th class="p-3 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            ${faculties.map((fac, idx) => `
+              <tr>
+                <td class="p-3 font-semibold text-gray-800">${fac.id}</td>
+                <td class="p-3 font-medium text-gray-800">${fac.name}</td>
+                <td class="p-3 text-gray-600">${fac.dept}</td>
+                <td class="p-3 text-gray-600">${fac.doc}</td>
+                <td class="p-3"><span class="px-2 py-0.5 text-xs rounded-full ${fac.status === 'Verified' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${fac.status}</span></td>
+                <td class="p-3 text-right">
+                  <button onclick="editFaculty(${idx})" class="text-indigo-600 hover:text-indigo-900 text-xs font-bold">
+                    <i class="fa-solid fa-pen-to-square"></i> Update Details
+                  </button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    function handleFacultySubmit(e) {
+      e.preventDefault();
+      const editIdx = parseInt(document.getElementById('fac-edit-index').value);
+      const newFac = {
+        id: document.getElementById('fac-id').value,
+        name: document.getElementById('fac-name').value,
+        dept: document.getElementById('fac-dept').value,
+        doc: document.getElementById('fac-doc').value,
+        status: editIdx >= 0 ? collegeData[activeCollege].faculties[editIdx].status : "Pending"
+      };
+
+      if (editIdx >= 0) {
+        collegeData[activeCollege].faculties[editIdx] = newFac;
+      } else {
+        collegeData[activeCollege].faculties.push(newFac);
+      }
+
+      resetFacultyForm();
+      renderCollegeFaculty();
+    }
+
+    function editFaculty(idx) {
+      const fac = collegeData[activeCollege].faculties[idx];
+      document.getElementById('fac-edit-index').value = idx;
+      document.getElementById('fac-id').value = fac.id;
+      document.getElementById('fac-name').value = fac.name;
+      document.getElementById('fac-dept').value = fac.dept;
+      document.getElementById('fac-doc').value = fac.doc;
+
+      document.getElementById('fac-form-title').innerText = "Update Faculty Details";
+      document.getElementById('fac-submit-btn').innerText = "Update Faculty";
+    }
+
+    function resetFacultyForm() {
+      document.getElementById('faculty-form').reset();
+      document.getElementById('fac-edit-index').value = "-1";
+      document.getElementById('fac-form-title').innerText = "Register New Faculty";
+      document.getElementById('fac-submit-btn').innerText = "Save Faculty";
+    }
+
+    // 2. Lab Operations
+    function renderCollegeLabs() {
+      const container = document.getElementById('college-lab-list');
+      const labs = collegeData[activeCollege].labs;
+
+      if (labs.length === 0) {
+        container.innerHTML = `<p class="text-gray-500 text-sm col-span-2">No registered labs available.</p>`;
+        return;
+      }
+
+      container.innerHTML = labs.map((lab, idx) => `
+        <div class="bg-gray-50 border border-gray-200 p-4 rounded-xl space-y-3">
+          <div class="flex justify-between items-start border-b pb-2">
+            <div>
+              <h4 class="font-bold text-gray-800 text-base">${lab.name}</h4>
+              <p class="text-xs text-indigo-600 font-semibold">Total Computers: ${lab.totalPCs || 0}</p>
+            </div>
+            <button onclick="editLab(${idx})" class="text-indigo-600 hover:text-indigo-900 text-xs font-bold">
+              <i class="fa-solid fa-pen-to-square"></i> Update Details
+            </button>
+          </div>
+          <div class="text-xs space-y-1 text-gray-600">
+            <p><span class="font-bold text-gray-700">OS / Version:</span> ${lab.version}</p>
+            <p><span class="font-bold text-gray-700">Specifications:</span> ${lab.spec}</p>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function handleLabSubmit(e) {
+      e.preventDefault();
+      const editIdx = parseInt(document.getElementById('lab-edit-index').value);
+      const name = document.getElementById('c-lab-name').value;
+      const count = document.getElementById('c-lab-count').value;
+      const version = document.getElementById('c-lab-version').value;
+      const spec = document.getElementById('c-lab-spec').value;
+
+      if (editIdx >= 0) {
+        const existingSystems = collegeData[activeCollege].labs[editIdx].systems || [];
+        collegeData[activeCollege].labs[editIdx] = {
+          name, totalPCs: count, version, spec, systems: existingSystems
+        };
+      } else {
+        collegeData[activeCollege].labs.push({
+          name, totalPCs: count, version, spec,
+          systems: [{ id: `SYS-${Math.floor(100 + Math.random() * 900)}`, spec: spec, status: "Active" }]
+        });
+      }
+
+      resetLabForm();
+      renderCollegeLabs();
+    }
+
+    function editLab(idx) {
+      const lab = collegeData[activeCollege].labs[idx];
+      document.getElementById('lab-edit-index').value = idx;
+      document.getElementById('c-lab-name').value = lab.name;
+      document.getElementById('c-lab-count').value = lab.totalPCs;
+      document.getElementById('c-lab-version').value = lab.version;
+      document.getElementById('c-lab-spec').value = lab.spec;
+
+      document.getElementById('lab-form-title').innerText = "Update Lab Details";
+      document.getElementById('lab-submit-btn').innerText = "Update Lab Details";
+    }
+
+    function resetLabForm() {
+      document.getElementById('lab-form').reset();
+      document.getElementById('lab-edit-index').value = "-1";
+      document.getElementById('lab-form-title').innerText = "Register New Lab & Systems";
+      document.getElementById('lab-submit-btn').innerText = "Save Lab Details";
+    }
+
+    // Initial Execution
+    updateLabDropdown();
+    renderLabStatus();
+    updateLiveDashboard();
+    setInterval(updateLiveDashboard, 2000);
+  </script>
+</body>
 </html>

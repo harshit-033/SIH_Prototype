@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Central Laptop Management</title>
-    <!-- Modern Google Fonts -->
+    <title>Lab Detail</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
     <!-- Animated background blobs -->
@@ -17,48 +16,89 @@
     </div>
 
     <main class="dashboard glass-panel">
+        <!-- ── Header ──────────────────────────────────────────────── -->
         <header class="dashboard-header">
             <div class="brand">
                 <div class="status-pulse"></div>
-                <h1>Central Laptop Management</h1>
+                <h1>Lab Detail</h1>
             </div>
-            
             <div class="server-stats">
                 <div id="server-status" class="stat-badge offline">
                     <span class="dot"></span>
                     <span class="text">Server: OFFLINE</span>
                 </div>
                 <div class="stat-badge neutral">
-                    <span class="text">Clients: <strong id="clients-count">0</strong></span>
+                    <span class="text">Online: <strong id="clients-count">0</strong></span>
+                </div>
+                <div class="stat-badge neutral">
+                    <span class="text">Inventory: <strong id="inventory-count">0</strong></span>
                 </div>
             </div>
         </header>
 
-        <section class="table-section">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th>Laptop</th>
-                        <th>Status</th>
-                        <th>CPU</th>
-                        <th>RAM</th>
-                        <th class="hide-mobile">IP Address</th>
-                        <th class="hide-mobile">Last Seen</th>
-                    </tr>
-                </thead>
-                <tbody id="clients-table-body">
-                    <!-- Data will be injected here -->
-                    <tr>
-                        <td colspan="6" class="empty-state">
-                            <div class="spinner"></div>
-                            <p>Waiting for data...</p>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+        <!-- ── Tab Bar ────────────────────────────────────────────── -->
+        <nav class="tab-bar">
+            <button class="tab-btn active" id="tab-monitor" onclick="switchTab('monitor')">
+                <span class="tab-icon">📡</span> Live Monitor
+            </button>
+            <button class="tab-btn" id="tab-inventory" onclick="switchTab('inventory')">
+                <span class="tab-icon">📋</span> PC Inventory
+                <span class="tab-badge" id="inventory-badge">0</span>
+            </button>
+        </nav>
+
+        <!-- ── Tab: Live Monitor ───────────────────────────────────── -->
+        <section class="tab-panel active" id="panel-monitor">
+            <div class="table-section">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Laptop</th>
+                            <th>Status</th>
+                            <th>CPU</th>
+                            <th>RAM</th>
+                            <th class="hide-mobile">IP Address</th>
+                            <th class="hide-mobile">Last Seen</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="clients-table-body">
+                        <tr>
+                            <td colspan="7" class="empty-state">
+                                <div class="spinner"></div>
+                                <p>Waiting for data...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ── Tab: PC Inventory ───────────────────────────────────── -->
+        <section class="tab-panel" id="panel-inventory">
+            <div class="inventory-grid" id="inventory-grid">
+                <div class="inv-empty">
+                    <div class="spinner"></div>
+                    <p>No PCs in inventory yet.<br>Connect a client to register it.</p>
+                </div>
+            </div>
         </section>
     </main>
 
-    <script src="app.js"></script>
+    <!-- ── Slide-over Detail Modal ──────────────────────────────────── -->
+    <div id="details-modal" class="modal-overlay hidden">
+        <div class="modal-content glass-panel">
+            <header class="modal-header">
+                <div>
+                    <h2>System Details: <span id="modal-hostname"></span></h2>
+                    <p id="modal-subtitle" class="modal-subtitle"></p>
+                </div>
+                <button id="close-modal" class="close-btn">&times;</button>
+            </header>
+            <div class="modal-body" id="modal-body-content"></div>
+        </div>
+    </div>
+
+    <script src="app.js?v=4"></script>
 </body>
 </html>
