@@ -34,3 +34,26 @@ pip install -r requirements.txt
 6. On the **main PC**, open `dashboard/index.html` in your browser.
 
 > **Note:** Both PCs must be connected to the same network.
+
+---
+
+## Backend (Spring Boot)
+
+A production-grade Spring Boot backend has been added under [`backend/`](./backend/).
+
+See [`backend/README.md`](./backend/README.md) for:
+- Setup instructions
+- Environment variable reference
+- Database setup
+- Architecture overview
+- How to run the backend alongside the scanner
+
+### Architecture
+
+```
+React Frontend (future)  →  Spring Boot Backend (port 8080)  →  PostgreSQL 18
+                                       ↓
+                        FastAPI Scanner Service (port 8000)
+                                       ↑
+                           client.py agents on remote PCs
+```

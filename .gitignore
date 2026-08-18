@@ -1,0 +1,32 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# Node / Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.oxlintrc.json
+node_modules/
+dist/
+.npm
+
+# Backend / Java / Maven
+backend/target/
+backend/pgdata/
+backend/src/main/resources/application-local.yml
+target/
+*.class
+
+# IDE & Editor files
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+*.swp

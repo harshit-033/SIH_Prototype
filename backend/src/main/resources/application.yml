@@ -1,0 +1,74 @@
+# ============================================================
+# SIH Inspection Platform — Spring Boot Backend Configuration
+# ============================================================
+# All secrets and environment-specific values are injected via
+# environment variables. DO NOT hardcode credentials here.
+# For local development, copy application-local.yml.example
+# to application-local.yml and fill in your values.
+# ============================================================
+
+spring:
+  profiles:
+    active: local
+  application:
+    name: inspection-backend
+
+  # --- Database ---
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/sih_inspection}
+    username: ${DB_USERNAME:sih_user}
+    driver-class-name: org.postgresql.Driver
+    # Password MUST be provided via environment variable; no default.
+    password: ${DB_PASSWORD}
+
+  # --- JPA / Hibernate (Entity-based Table Generation) ---
+  jpa:
+    hibernate:
+      ddl-auto: update     # Hibernate generates and updates tables directly from @Entity classes
+    show-sql: false
+    open-in-view: false    # Avoid the OSIV anti-pattern
+    properties:
+      hibernate:
+        format_sql: true
+
+  # --- Flyway ---
+  flyway:
+    enabled: false
+
+# --- Application Security & JWT ---
+application:
+  security:
+    jwt:
+      # 256-bit base64-encoded default key for development; override via JWT_SECRET in production
+      secret-key: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+      # JWT token expiration in milliseconds (default: 86400000 ms = 24 hours)
+      expiration: ${JWT_EXPIRATION:86400000}
+
+# --- Actuator ---
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info   # Only safe endpoints exposed; never expose env, beans, etc.
+      base-path: /actuator
+  endpoint:
+    health:
+      show-details: never      # Do not leak system info publicly
+  info:
+    env:
+      enabled: true
+
+# --- Server ---
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-message: never     # Do not leak exception messages to clients
+    include-binding-errors: never
+
+# --- Logging ---
+logging:
+  level:
+    root: INFO
+    com.sih.inspection: DEBUG
+    org.springframework.security: INFO
+    org.flywaydb: INFO
