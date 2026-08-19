@@ -8,6 +8,7 @@ import com.sih.inspection.auth.entity.Role;
 import com.sih.inspection.auth.entity.User;
 import com.sih.inspection.auth.repository.UserRepository;
 import com.sih.inspection.exception.AccountDisabledException;
+import com.sih.inspection.exception.DuplicateResourceException;
 import com.sih.inspection.exception.InvalidCredentialsException;
 import com.sih.inspection.security.JwtService;
 import com.sih.inspection.security.SecurityUser;
@@ -117,7 +118,28 @@ public class AuthService {
     }
 
     /**
-     * Seeds the standard 5 demo user accounts if they do not already exist.
+     * Enforces the critical system invariant: exactly ONE ADMIN account can exist in the system.
+     * Throws DuplicateResourceException if an attempt is made to create or promote another user to ADMIN.
+     *
+     * @param user the user being saved or updated
+     * @throws DuplicateResourceException if another ADMIN already exists
+     */
+    public void validateSingleAdminInvariant(User user) {
+        if (user.getRole() == Role.ADMIN) {
+            boolean anotherAdminExists = (user.getId() == null)
+                    ? userRepository.existsByRole(Role.ADMIN)
+                    : userRepository.existsByRoleAndIdNot(Role.ADMIN, user.getId());
+
+            if (anotherAdminExists) {
+                log.warn("Security violation: Attempted to create or promote secondary ADMIN account for email=[{}]", user.getEmail());
+                throw new DuplicateResourceException("An administrator account already exists. Only one ADMIN is permitted in the system.");
+            }
+        }
+    }
+
+    /**
+     * Seeds the standard demo user accounts if they do not already exist.
+     * Idempotent: repeated calls do not create duplicate accounts or duplicate admins.
      */
     @Transactional
     public List<UserSummaryResponse> seedDefaultUsers() {
@@ -138,9 +160,13 @@ public class AuthService {
                         existing.setPassword(encodedPassword);
                         existing.setRole(u.getRole());
                         existing.setStatus(u.getStatus());
+                        validateSingleAdminInvariant(existing);
                         return userRepository.save(existing);
                     })
-                    .orElseGet(() -> userRepository.save(u));
+                    .orElseGet(() -> {
+                        validateSingleAdminInvariant(u);
+                        return userRepository.save(u);
+                    });
 
             created.add(UserSummaryResponse.from(targetUser));
             log.info("Seeded/updated demo user: email=[{}], role=[{}], status=[{}]", targetUser.getEmail(), targetUser.getRole(), targetUser.getStatus());
