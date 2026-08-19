@@ -68,12 +68,24 @@ class InspectorInstituteAssignmentControllerIntegrationTest {
     private Institute institute2;
     private InspectorInstituteAssignment savedAssignment;
 
+    @Autowired
+    private com.sih.inspection.inspection.repository.InspectionAuditEventRepository auditEventRepository;
+
+    @Autowired
+    private com.sih.inspection.inspection.repository.InspectionResultRepository resultRepository;
+
+    @Autowired
+    private com.sih.inspection.inspection.repository.InspectionRepository inspectionRepository;
+
     @BeforeEach
     void setup() {
         mockMvc = MockMvcBuilders.webAppContextSetup(context)
                 .apply(springSecurity())
                 .build();
 
+        auditEventRepository.deleteAll();
+        resultRepository.deleteAll();
+        inspectionRepository.deleteAll();
         assignmentRepository.deleteAll();
         instituteRepository.deleteAll();
         userRepository.deleteAll();

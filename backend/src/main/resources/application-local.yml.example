@@ -1,0 +1,20 @@
+# ============================================================
+# LOCAL DEVELOPMENT OVERRIDES EXAMPLE
+# ============================================================
+# Copy this file to application-local.yml and fill in values.
+# application-local.yml is git-ignored.
+# ============================================================
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/sih_inspection
+    username: your_db_user
+    password: your_db_password
+
+  jpa:
+    show-sql: true
+
+logging:
+  level:
+    com.sih.inspection: DEBUG
+    org.springframework.security: DEBUG
