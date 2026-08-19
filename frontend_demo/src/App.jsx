@@ -8,6 +8,7 @@ import SecurityFlowDiagram from './components/SecurityFlowDiagram';
 import Phase1AuthConsole from './components/Phase1AuthConsole';
 import Phase2InstitutesConsole from './components/Phase2InstitutesConsole';
 import Phase3AssignmentsConsole from './components/Phase3AssignmentsConsole';
+import Phase4InspectorsConsole from './components/Phase4InspectorsConsole';
 import RequestHistoryConsole from './components/RequestHistoryConsole';
 import ErrorExplainer from './components/ErrorExplainer';
 import AlertBanner from './components/AlertBanner';
@@ -173,7 +174,13 @@ export default function App() {
           onShowAlert={showAlert}
         />
 
-        {/* 6. JWT Claims & Storage Inspector */}
+        {/* 6. Phase 4.1 — Admin Inspector Management Console */}
+        <Phase4InspectorsConsole
+          activeSession={activeSession}
+          onShowAlert={showAlert}
+        />
+
+        {/* 7. JWT Claims & Storage Inspector */}
         <JwtInspector
           activeSession={activeSession}
           onCopyToken={handleCopyToken}

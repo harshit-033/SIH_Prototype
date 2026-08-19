@@ -80,6 +80,30 @@ const PERMISSIONS_MATRIX = [
     admin: true,
     inspector: true,
     institute: false
+  },
+  {
+    phase: 'Phase 4.1: Inspectors',
+    action: 'Create Inspector Account',
+    endpoint: 'POST /api/v1/inspectors',
+    admin: true,
+    inspector: false,
+    institute: false
+  },
+  {
+    phase: 'Phase 4.1: Inspectors',
+    action: 'List All Inspectors',
+    endpoint: 'GET /api/v1/inspectors',
+    admin: true,
+    inspector: false,
+    institute: false
+  },
+  {
+    phase: 'Phase 4.1: Inspectors',
+    action: 'View Inspector Details',
+    endpoint: 'GET /api/v1/inspectors/{id}',
+    admin: true,
+    inspector: false,
+    institute: false
   }
 ];
 

@@ -237,5 +237,31 @@ export const api = {
       method: 'GET',
       path: `/api/institutes/${instituteId}/inspector`,
       token
+    }),
+
+  // Inspectors (Phase 4.1)
+  listInspectors: (token) =>
+    executeApiRequest({
+      method: 'GET',
+      path: '/api/v1/inspectors',
+      token
+    }),
+
+  getInspector: (id, token) =>
+    executeApiRequest({
+      method: 'GET',
+      path: `/api/v1/inspectors/${id}`,
+      token
+    }),
+
+  createInspector: (inspectorData, token) =>
+    executeApiRequest({
+      method: 'POST',
+      path: '/api/v1/inspectors',
+      body: {
+        email: inspectorData.email,
+        password: inspectorData.password
+      },
+      token
     })
 };
