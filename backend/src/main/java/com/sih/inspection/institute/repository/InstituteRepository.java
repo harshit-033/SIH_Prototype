@@ -46,6 +46,15 @@ public interface InstituteRepository extends JpaRepository<Institute, Long> {
     boolean existsByContactEmailIgnoreCase(String contactEmail);
 
     /**
+     * Finds an institute by its contact email (case-insensitive).
+     * Used for resolving institute ownership for authenticated INSTITUTE users.
+     *
+     * @param contactEmail contact email
+     * @return Optional containing Institute if found
+     */
+    Optional<Institute> findByContactEmailIgnoreCase(String contactEmail);
+
+    /**
      * Checks if another institute with a different ID already has the given contact email.
      *
      * @param contactEmail contact email address
