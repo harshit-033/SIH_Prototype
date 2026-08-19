@@ -53,7 +53,7 @@ export async function executeApiRequest({
   }
 
   const requestLogData = {
-    id: Date.now() + Math.random(),
+    id: `req_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
     timestamp,
     method,
     url,
@@ -236,6 +236,32 @@ export const api = {
     executeApiRequest({
       method: 'GET',
       path: `/api/institutes/${instituteId}/inspector`,
+      token
+    }),
+
+  // Inspectors (Phase 4.1)
+  listInspectors: (token) =>
+    executeApiRequest({
+      method: 'GET',
+      path: '/api/v1/inspectors',
+      token
+    }),
+
+  getInspector: (id, token) =>
+    executeApiRequest({
+      method: 'GET',
+      path: `/api/v1/inspectors/${id}`,
+      token
+    }),
+
+  createInspector: (inspectorData, token) =>
+    executeApiRequest({
+      method: 'POST',
+      path: '/api/v1/inspectors',
+      body: {
+        email: inspectorData.email,
+        password: inspectorData.password
+      },
       token
     })
 };

@@ -5,6 +5,7 @@ import com.sih.inspection.auth.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -63,4 +64,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @return Optional containing the admin user
      */
     Optional<User> findByRole(Role role);
+
+    /**
+     * Finds all users with the specified role, ordered by ID ascending.
+     *
+     * @param role role (e.g. Role.INSPECTOR)
+     * @return list of users matching the given role
+     */
+    List<User> findAllByRoleOrderByIdAsc(Role role);
 }
