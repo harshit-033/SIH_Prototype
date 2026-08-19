@@ -1,0 +1,11 @@
+model:
+  path: runs/segment/runs/segment/s2_1024_s/weights/best.pt
+  imgsz: 1024
+  conf: 0.35
+  iou: 0.30
+
+classes:
+  0: crack
+  1: spalling
+  2: corrosion
+  3: efflorescence
