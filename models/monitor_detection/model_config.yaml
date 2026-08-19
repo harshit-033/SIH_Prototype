@@ -1,0 +1,7 @@
+model:
+  path: runs/detect/monitor_detection_v3/weights/best.pt
+  imgsz: 1280
+  conf: 0.08
+  iou: 0.30
+classes:
+  0: monitor
