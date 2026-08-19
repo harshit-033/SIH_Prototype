@@ -53,7 +53,7 @@ export async function executeApiRequest({
   }
 
   const requestLogData = {
-    id: Date.now() + Math.random(),
+    id: `req_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
     timestamp,
     method,
     url,

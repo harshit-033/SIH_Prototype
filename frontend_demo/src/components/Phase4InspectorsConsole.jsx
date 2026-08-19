@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { api } from '../services/apiClient';
 
 export default function Phase4InspectorsConsole({
@@ -33,8 +33,8 @@ export default function Phase4InspectorsConsole({
   const [assignInstituteId, setAssignInstituteId] = useState('');
   const [isAssigning, setIsAssigning] = useState(false);
 
-  // Fetch list of inspectors
-  const handleListInspectors = useCallback(async () => {
+  // Fetch list of inspectors (Admin action or post-create refresh)
+  const handleListInspectors = async () => {
     if (!token) {
       onShowAlert('No active token. Please log in first.', 'warning');
       return;
@@ -50,30 +50,19 @@ export default function Phase4InspectorsConsole({
       const msg = res.data?.message || (res.status === 403 ? 'You do not have permission to view inspectors.' : 'Failed to retrieve inspectors');
       onShowAlert(`GET /api/v1/inspectors returned HTTP ${res.status}: ${msg}`, res.status === 403 ? 'warning' : 'danger');
     }
-  }, [token, onShowAlert]);
+  };
 
   // Fetch list of institutes for assignment selector
-  const fetchInstitutes = useCallback(async () => {
+  const fetchInstitutes = async () => {
     if (!token) return;
     const res = await api.listInstitutes(token);
     if (res.ok && res.data?.data) {
       setInstitutes(res.data.data);
-      if (res.data.data.length > 0 && !assignInstituteId) {
+      if (res.data.data.length > 0) {
         setAssignInstituteId(String(res.data.data[0].id));
       }
     }
-  }, [token, assignInstituteId]);
-
-  // Automatically load inspectors and institutes on mount if user is ADMIN
-  useEffect(() => {
-    if (isAdmin && token) {
-      handleListInspectors();
-      fetchInstitutes();
-    } else {
-      setInspectors([]);
-      setInspectorDetails(null);
-    }
-  }, [isAdmin, token, handleListInspectors, fetchInstitutes]);
+  };
 
   // Fetch inspector by ID
   const handleGetById = async () => {

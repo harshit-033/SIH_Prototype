@@ -8,12 +8,10 @@ export default function RequestHistoryConsole() {
   useEffect(() => {
     const unsubscribe = subscribeToLogs((updatedLogs) => {
       setLogs(updatedLogs);
-      if (updatedLogs.length > 0 && !selectedLog) {
-        setSelectedLog(updatedLogs[0]);
-      }
+      setSelectedLog((prev) => prev || (updatedLogs.length > 0 ? updatedLogs[0] : null));
     });
     return unsubscribe;
-  }, [selectedLog]);
+  }, []);
 
   const getStatusBadge = (status) => {
     if (status >= 200 && status < 300) return 'status-badge-200';

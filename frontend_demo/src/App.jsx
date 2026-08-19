@@ -29,12 +29,12 @@ export default function App() {
   const [alert, setAlert] = useState(null);
   const [isSeeding, setIsSeeding] = useState(false);
 
-  const showAlert = (message, type = 'info') => {
+  const showAlert = useCallback((message, type = 'info') => {
     setAlert({ message, type });
     setTimeout(() => {
       setAlert(null);
     }, 6000);
-  };
+  }, []);
 
   // Check Backend Health
   const checkHealth = useCallback(async () => {
