@@ -1,10 +1,8 @@
 # ============================================================
 # SIH Inspection Platform — Spring Boot Backend Configuration
 # ============================================================
-# All secrets and environment-specific values are injected via
-# environment variables. DO NOT hardcode credentials here.
-# For local development, copy application-local.yml.example
-# to application-local.yml and fill in your values.
+# Uses embedded in-memory H2 database by default (zero setup).
+# Automatically switches to PostgreSQL if DB_URL is overridden.
 # ============================================================
 
 spring:
@@ -13,23 +11,28 @@ spring:
   application:
     name: inspection-backend
 
-  # --- Database ---
+  # --- Database Configuration (H2 in-memory default with PostgreSQL mode) ---
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/sih_inspection}
-    username: ${DB_USERNAME:sih_user}
-    driver-class-name: org.postgresql.Driver
-    # Password MUST be provided via environment variable; no default.
-    password: ${DB_PASSWORD}
+    url: ${DB_URL:jdbc:h2:mem:sih_inspection;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL}
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:}
+    driver-class-name: ${DB_DRIVER:org.h2.Driver}
 
-  # --- JPA / Hibernate (Entity-based Table Generation) ---
+  # --- JPA / Hibernate ---
   jpa:
     hibernate:
-      ddl-auto: update     # Hibernate generates and updates tables directly from @Entity classes
+      ddl-auto: update     # Generates and updates tables directly from @Entity classes
     show-sql: false
-    open-in-view: false    # Avoid the OSIV anti-pattern
+    open-in-view: false
     properties:
       hibernate:
         format_sql: true
+
+  # --- H2 Web Console (Available at http://localhost:8080/h2-console) ---
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
 
   # --- Flyway ---
   flyway:
@@ -39,9 +42,7 @@ spring:
 application:
   security:
     jwt:
-      # 256-bit base64-encoded default key for development; override via JWT_SECRET in production
       secret-key: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
-      # JWT token expiration in milliseconds (default: 86400000 ms = 24 hours)
       expiration: ${JWT_EXPIRATION:86400000}
 
 # --- Actuator ---
@@ -49,11 +50,11 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info   # Only safe endpoints exposed; never expose env, beans, etc.
+        include: health,info
       base-path: /actuator
   endpoint:
     health:
-      show-details: never      # Do not leak system info publicly
+      show-details: always
   info:
     env:
       enabled: true
@@ -62,13 +63,13 @@ management:
 server:
   port: ${SERVER_PORT:8080}
   error:
-    include-message: never     # Do not leak exception messages to clients
+    include-message: never
     include-binding-errors: never
 
 # --- Logging ---
 logging:
   level:
     root: INFO
-    com.sih.inspection: DEBUG
+    com.sih.inspection: INFO
     org.springframework.security: INFO
     org.flywaydb: INFO

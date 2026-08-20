@@ -69,10 +69,15 @@ public class SecurityConfig {
                 .accessDeniedHandler(jwtAccessDeniedHandler)
             )
 
+            // Disable frame options to allow H2 web console
+            .headers(headers -> headers.frameOptions(frame -> frame.disable()))
+
             // Endpoint authorization rules
             .authorizeHttpRequests(auth -> auth
                 // Allow CORS pre-flight OPTIONS requests
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                // H2 Web Console (local development)
+                .requestMatchers("/h2-console/**").permitAll()
                 // Actuator health & info: permit for load balancer / container health checks
                 .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/info").permitAll()
                 // Authentication login & seed endpoints: publicly accessible

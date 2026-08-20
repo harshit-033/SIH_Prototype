@@ -2,3 +2,8 @@ fastapi
 uvicorn[standard]
 websockets
 psutil
+ultralytics
+opencv-python
+torch
+torchvision
+numpy
